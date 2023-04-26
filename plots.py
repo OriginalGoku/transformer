@@ -3,6 +3,7 @@ import parameters as param
 import numpy as np
 import keras
 
+
 def plot_hist_y_distribution(y_train, y_test, bins=100):
     # Plot the histogram for the train and test set y values
 
@@ -15,7 +16,8 @@ def plot_hist_y_distribution(y_train, y_test, bins=100):
     plt.savefig(param.result_folder + "/Train and Test y Distribution.png")
     plt.show()
 
-def plot_train_validation_loss(history: keras.callbacks.History, save_results = True):
+
+def plot_train_validation_loss(history: keras.callbacks.History, save_results=True):
     # Plot the training and validation loss
     plt.figure(figsize=(10, 6))
     plt.plot(history.history['loss'], label='Training Loss')
@@ -28,7 +30,8 @@ def plot_train_validation_loss(history: keras.callbacks.History, save_results = 
         plt.savefig(param.result_folder + '/Network train and validation loss.png')
     plt.show()
 
-def plot_history_metrics(history: keras.callbacks.History, save_results = True):
+
+def plot_history_metrics(history: keras.callbacks.History, save_results=True):
     total_plots = len(history.history)
     cols = total_plots // 2
 
@@ -48,23 +51,25 @@ def plot_history_metrics(history: keras.callbacks.History, save_results = True):
     plt.show()
 
 
-
-def plot_scatter_true_vs_predicted(y_test, y_pred, start_:int, end_:int ,save_results = True):
+def plot_scatter_true_vs_predicted(y_test, y_pred, start_: int, end_: int, save_results=True):
     # start_ and end_ Specify the range you want to display
 
     # Plot the limited range of true values vs the predicted values
     plt.scatter(np.arange(start_, end_), y_pred[start_:end_], alpha=0.5, marker='x', color='red', label='Predicted')
-    plt.scatter(np.arange(start_, end_), y_test.reshape(-1,1)[start_:end_], alpha=0.5, marker='o', color='blue', label='True')
+    plt.scatter(np.arange(start_, end_), y_test.reshape(-1, 1)[start_:end_], alpha=0.5, marker='o', color='blue',
+                label='True')
 
     # plt.xlabel("True Values")
     plt.ylabel("Predicted/True Values")
     plt.title("True Values vs Predicted Values")
     plt.legend()
     if save_results:
-        plt.savefig(param.result_folder + f'/True vs Predicted Values chunk: {param.chunk_size} - ma: {param.ma_len} - forecast: {param.forecast_size}.png')
+        plt.savefig(
+            param.result_folder + "/" + f'True vs Predicted Values chunk: {param.chunk_size} - ma: {param.ma_len} - forecast: {param.forecast_size}.png')
     plt.show()
 
-def plot_histogram_y_test_minus_y_pred(y_test, y_pred, save_results = True, bins = 30):
+
+def plot_histogram_y_test_minus_y_pred(y_test, y_pred, save_results=True, bins=30):
     # Calculate the differences between true and predicted values
     differences = (y_test - y_pred).flatten()
 
@@ -74,17 +79,45 @@ def plot_histogram_y_test_minus_y_pred(y_test, y_pred, save_results = True, bins
     plt.ylabel("Frequency")
     plt.title("Histogram of Differences between True and Predicted Values")
     if save_results:
-        plt.savefig(param.result_folder + f'/Histogram of Differences between True and Predicted Values chunk: {param.chunk_size} - ma: {param.ma_len} - forecast: {param.forecast_size}.png')
+        plt.savefig(
+            param.result_folder + "/" + 'Histogram of Differences between True and Predicted Values chunk: {param.chunk_size} - ma: {param.ma_len} - forecast: {param.forecast_size}.png')
     plt.show()
 
 
-def plot_scatter_true_vs_predicted_diagonal(y_test, y_pred, save_results = True):
+def plot_scatter_true_vs_predicted_diagonal(y_test, y_pred, save_results=True):
     # Plot the true values vs the predicted values
     plt.scatter(y_test, y_pred, alpha=0.5)
     plt.xlabel("True Values")
     plt.ylabel("Predicted Values")
-    plt.title(f"True Values vs Predicted Values\nChunk Len:{param.chunk_size} - SMA{param.ma_len} - Future Len:{param.forecast_size}")
-    plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red') # Diagonal line
+    plt.title(
+        f"True Values vs Predicted Values\nChunk Len:{param.chunk_size} - SMA{param.ma_len} - Future Len:{param.forecast_size}")
+    plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red')  # Diagonal line
     if save_results:
-        plt.savefig(param.result_folder + f'/True vs Predicted Values chunk: {param.chunk_size} - ma: {param.ma_len} - forecast: {param.forecast_size}.png')
+        plt.savefig(
+            param.result_folder + "/" + f'True vs Predicted Values chunk: {param.chunk_size} - ma: {param.ma_len} - forecast: {param.forecast_size}.png')
     plt.show()
+
+
+def plot_scatter_true_vs_predicted_diagonal_only_different_sign(y_test, y_pred, save_results=True):
+    # Plot the true values vs the predicted values
+    result_indices = [index for index, (test_val, pred_val) in enumerate(zip(y_test, y_pred)) if
+                      np.sign(test_val) != np.sign(pred_val)]
+    plt.scatter(y_test[result_indices], y_pred[result_indices], alpha=0.5)
+    plt.xlabel("True Values")
+    plt.ylabel("Predicted Values")
+    plt.title(
+        f"True Values vs Predicted (Wrong Direction only)\nChunk Len:{param.chunk_size} - SMA{param.ma_len} - Future "
+        f"Len:{param.forecast_size}")
+    # Diagonal line
+    plt.plot([min(y_test[result_indices]), max(y_test[result_indices])], [min(y_test[result_indices]),
+                                                                          max(y_test[result_indices])], color='red')
+    if save_results:
+        file_name = f'True vs Predicted (Wrong Direction) chunk: {param.chunk_size} - ma: {param.ma_len} - forecast: {param.forecast_size}.png'
+        print("Saving file: ", file_name)
+        print("Saving full path: "+ param.result_folder + "/" + file_name)
+        plt.savefig(param.result_folder + "/" + file_name)
+    plt.show()
+
+# y_test = numpy.array([1,2,3,4,5,6,7,8,9,10])
+# y_pred = numpy.array([-4,23,13,-49,50,-16,37,88,-91,170])
+# compare each element of y_test with y_pred and generated a new array where the sign of both elements is not the same

@@ -81,8 +81,8 @@ def generate_random_sets(data: pd.DataFrame(), len_test: int = 300,
     chunk_len = int(len_test / test_pct)
     for counter in range(len(data) // chunk_len):
         next_point = random.randint(0, chunk_len - len_test) + (counter * chunk_len)
-        print(f"next_point: {next_point}")
-        print(f"current_pointer: {current_pointer}")
+        # print(f"next_point: {next_point}")
+        # print(f"current_pointer: {current_pointer}")
         # print(f"len_test: {len_test}")
         # todo: keep the date ranges for train and test for future analysis
         x_train_temp, y_train_temp = gen_sliding_window(data.iloc[current_pointer: next_point], x_col, y_col,
@@ -91,11 +91,10 @@ def generate_random_sets(data: pd.DataFrame(), len_test: int = 300,
         y_random_train.extend(y_train_temp)
         x_test_temp, y_test_temp = gen_sliding_window(data.iloc[next_point:next_point + len_test], x_col,
                                                       y_col, z_normalize)
-        print(f"len(x_test_temp): {len(x_test_temp)}")
+        # print(f"len(x_test_temp): {len(x_test_temp)}")
         X_random_test.extend(x_test_temp)
         y_random_test.extend(y_test_temp)
         current_pointer = next_point + len_test
-        print("------")
 
     X_random_train = np.array(X_random_train)
     y_random_train = np.array(y_random_train)
@@ -175,8 +174,8 @@ def analyze_results(y_test, y_pred, save_results=True):
             (df_analyze_results['diff'] > 0.01) | (df_analyze_results['diff'] < -0.01))]) / len(df_analyze_results),
                                             2))
     if save_results:
-        save_csv(df_analyze_results, param.result_folder +
-                 f'/Analysis for chunk: {param.chunk_size} - MA: {param.ma_len} - Forecast: {param.forecast_size}.csv')
+        save_csv(df_analyze_results, param.result_folder + "/"
+                 f'Analysis for chunk: {param.chunk_size} - MA: {param.ma_len} - Forecast: {param.forecast_size}.csv')
 
 
 def save_csv(data, file_name):

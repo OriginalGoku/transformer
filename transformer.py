@@ -7,6 +7,9 @@ from sklearn.metrics import precision_score, recall_score
 from tqdm import tqdm
 from tensorflow import keras
 from tensorflow.keras import layers
+import tensorflow.keras.optimizers
+
+
 from sklearn.model_selection import train_test_split
 import random
 import parameters as param
@@ -86,6 +89,16 @@ def construct_transformer(X_train, y_train, epoc, head_size = 256, num_heads = 4
         optimizer = keras.optimizers.RMSprop(learning_rate=learning_rate)
     elif optimizer_choice == "adagrad":
         optimizer = keras.optimizers.Adagrad(learning_rate=learning_rate)
+    # elif optimizer_choice == "MomentumSGD":
+    #     optimizer = keras.optimizers.MomentumSGD(learning_rate=learning_rate)
+    elif optimizer_choice == "Adadelta":
+        optimizer = keras.optimizers.Adadelta(learning_rate=learning_rate)
+
+
+    # Adagrad: keras.optimizers.Adagrad
+    # Adamax: keras.optimizers.Adamax
+    # Nadam: keras.optimizers.Nadam
+    # FTRL: keras.optimizers.Ftrl
 
 
     model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
@@ -121,4 +134,5 @@ def evaluate_model(model, X_test, y_test):
 
     print("Test Loss:", test_loss)
     print("Test Mean Absolute Error:", test_mae)
-    # Predict the values on the test dataset
+
+    return test_mae
