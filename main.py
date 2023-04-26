@@ -3,30 +3,36 @@ import util
 import plots
 import optuna
 
-TRANSFORMER_SETTING = {"epoc": 2,
-                       "head_size": 256,
-                       "num_heads": 4,
-                       "ff_dim": 4,
-                       "num_transformer_blocks": 4,
-                       "mlp_units": 128,
-                       "dropout": 0.4,
-                       "mlp_dropout": 0.25,
-                       "optimizer_choice": 'adam',
-                       "loss": 'mean_squared_error',
-                       "metrics": 'mean_absolute_error',
-                       "learning_rate": 0.001,
-                       "min_learning_rate": 0.00001,
-                       "print_summary": True,
-                       "validation_split": 0.2,
-                       "batch_size": 32}
+TRANSFORMER_SETTING_non_optimized = {"epoc": 2,
+                                     "head_size": 256,
+                                     "num_heads": 4,
+                                     "ff_dim": 4,
+                                     "num_transformer_blocks": 4,
+                                     "mlp_units": 128,
+                                     "dropout": 0.4,
+                                     "mlp_dropout": 0.25,
+                                     "optimizer_choice": 'adam',
+                                     "loss": 'mean_squared_error',
+                                     "metrics": 'mean_absolute_error',
+                                     "learning_rate": 0.001,
+                                     "min_learning_rate": 0.00001,
+                                     "print_summary": True,
+                                     "validation_split": 0.2,
+                                     "batch_size": 32}
+TRANSFORMER_SETTING = {'epoc': 2, 'optimizer_choice': 'adam', 'num_heads': 1, 'head_size': 128, 'ff_dim': 3,
+                       'num_transformer_blocks': 1, 'mlp_units': 128, 'dropout': 0.2,
+                       'mlp_dropout': 0.30000000000000004, 'learning_rate': 0.0007900000000000001,
+                       'validation_split': 0.1, 'batch_size': 16}
+
 
 def objective(trial):
     X_train, X_test, y_train, y_test = util.generate_random_sets(util.load_file('data/BATS_SPY.csv'), len_test=300,
                                                                  test_pct=0.3)
 
-    optimizer = trial.suggest_categorical("optimizer_choice", ['sgd', 'adam', 'rmsprop', 'adagrad', 'adadelta', 'adamax', 'nadam', 'ftrl'])
+    optimizer = trial.suggest_categorical("optimizer_choice",
+                                          ['sgd', 'adam', 'rmsprop', 'adagrad', 'adadelta', 'adamax', 'nadam', 'ftrl'])
     num_head = trial.suggest_int("num_heads", 1, 5)
-    head_size = trial.suggest_categorical("head_size",[128, 256, 512])
+    head_size = trial.suggest_categorical("head_size", [128, 256, 512])
     ff_dim = trial.suggest_int("ff_dim", 1, 5)
     num_transformer_blocks = trial.suggest_int("num_transformer_blocks", 1, 5)
     mlp_units = trial.suggest_categorical("mlp_units", [128, 256, 512])
@@ -35,8 +41,6 @@ def objective(trial):
     learning_rate = trial.suggest_float("learning_rate", 0.00001, 0.01, step=0.00001)
     validation_split = trial.suggest_float("validation_split", 0.1, 0.5, step=0.1)
     batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128])
-
-
 
     TRANSFORMER_SETTING["optimizer_choice"] = optimizer
     TRANSFORMER_SETTING["num_heads"] = num_head
@@ -51,19 +55,22 @@ def objective(trial):
     TRANSFORMER_SETTING["print_summary"] = False
     TRANSFORMER_SETTING["batch_size"] = batch_size
 
-
     history, model = transformer.construct_transformer(X_train=X_train, y_train=y_train, **TRANSFORMER_SETTING)
     return transformer.evaluate_model(model, X_test, y_test)
 
+
 def optuna_optimize():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
-    study.optimize(objective, n_trials=2)
+    study.optimize(objective, n_trials=150)
     best_params = study.best_params
     print(f"Best params: {best_params}")
 
-def main():
+
+def optimizer():
     optuna_optimize()
-def main11():
+
+
+def main():
     X_train, X_test, y_train, y_test = util.generate_random_sets(util.load_file('data/BATS_SPY.csv'), len_test=300,
                                                                  test_pct=0.3)
     print(f"X_train shape: {X_train.shape}")

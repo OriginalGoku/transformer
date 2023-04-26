@@ -3,6 +3,7 @@ import numpy as np
 import random
 import parameters as param
 import matplotlib.pyplot as plt
+import keras
 
 
 def gen_sliding_window(data: pd.DataFrame(), col_X: str, col_y: str, z_normalize: bool = False):
@@ -100,6 +101,7 @@ def generate_random_sets(data: pd.DataFrame(), len_test: int = 300,
     y_random_train = np.array(y_random_train)
     X_random_test = np.array(X_random_test)
     y_random_test = np.array(y_random_test)
+    print(f"Generated {len(X_random_train)} Training and {len(X_random_test)} Test Data points")
     if return_3d_data:
         return X_random_train.reshape(*X_random_train.shape, 1), X_random_test.reshape(*X_random_test.shape, 1), \
             y_random_train, y_random_test
@@ -127,14 +129,14 @@ def generate_random_sets1(data: pd.DataFrame(), len_test: int = 300, test_pct: f
                                                       z_normalize)
         X_random_test.extend(x_test_temp)
         y_random_test.extend(y_test_temp)
-        print(f"len(x_test_temp): {len(x_test_temp)}")
-        print(f"len(X_random_test): {len(X_random_test)}")
+        # print(f"len(x_test_temp): {len(x_test_temp)}")
+        # print(f"len(X_random_test): {len(X_random_test)}")
         current_pointer = next_point + len_test
 
     X_random_train = np.array(X_random_train)
     y_random_train = np.array(y_random_train)
     X_random_test = np.array(X_random_test)
-    print("--------")
+    # print("--------")
     print(f"len(X_random_test): {len(X_random_test)}")
     y_random_test = np.array(y_random_test)
     # if return_3d_data:
@@ -155,7 +157,7 @@ def load_file(file_name: str):
 
 
 def load_model(model_name: str):
-    model = tf.keras.models.load_model(model_name)
+    model = keras.models.load_model(model_name)
     return model
 
 
@@ -175,7 +177,7 @@ def analyze_results(y_test, y_pred, save_results=True):
                                             2))
     if save_results:
         save_csv(df_analyze_results, param.result_folder + "/"
-                 f'Analysis for chunk: {param.chunk_size} - MA: {param.ma_len} - Forecast: {param.forecast_size}.csv')
+                 f'Analysis for chunk {param.chunk_size} - MA {param.ma_len} - Forecast {param.forecast_size}.csv')
 
 
 def save_csv(data, file_name):
