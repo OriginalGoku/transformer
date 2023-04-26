@@ -89,10 +89,14 @@ def construct_transformer(X_train, y_train, epoc, head_size = 256, num_heads = 4
         optimizer = keras.optimizers.RMSprop(learning_rate=learning_rate)
     elif optimizer_choice == "adagrad":
         optimizer = keras.optimizers.Adagrad(learning_rate=learning_rate)
-    # elif optimizer_choice == "MomentumSGD":
-    #     optimizer = keras.optimizers.MomentumSGD(learning_rate=learning_rate)
-    elif optimizer_choice == "Adadelta":
+    elif optimizer_choice == "adadelta":
         optimizer = keras.optimizers.Adadelta(learning_rate=learning_rate)
+    elif optimizer_choice == "adamax":
+        optimizer = keras.optimizers.Adamax(learning_rate=learning_rate)
+    elif optimizer_choice == "nadam":
+        optimizer = keras.optimizers.Nadam(learning_rate=learning_rate)
+    elif optimizer_choice == "ftrl":
+        optimizer = keras.optimizers.Ftrl(learning_rate=learning_rate)
 
 
     # Adagrad: keras.optimizers.Adagrad
