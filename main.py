@@ -19,10 +19,16 @@ TRANSFORMER_SETTING_non_optimized = {"epoc": 2,
                                      "print_summary": True,
                                      "validation_split": 0.2,
                                      "batch_size": 32}
-TRANSFORMER_SETTING = {'epoc': 2, 'optimizer_choice': 'adam', 'num_heads': 1, 'head_size': 128, 'ff_dim': 3,
-                       'num_transformer_blocks': 1, 'mlp_units': 128, 'dropout': 0.2,
-                       'mlp_dropout': 0.30000000000000004, 'learning_rate': 0.0007900000000000001,
-                       'validation_split': 0.1, 'batch_size': 16}
+TRANSFORMER_SETTING_100_Trials = {'epoc': 2, 'optimizer_choice': 'adam', 'num_heads': 1, 'head_size': 128, 'ff_dim': 3,
+                                  'num_transformer_blocks': 1, 'mlp_units': 128, 'dropout': 0.2,
+                                  'mlp_dropout': 0.3, 'learning_rate': 0.00079,
+                                  'validation_split': 0.1, 'batch_size': 16}
+
+# 200 Trials
+TRANSFORMER_SETTING = {'epoc': 2, 'optimizer_choice': 'adam', 'num_heads': 3, 'head_size': 128, 'ff_dim': 3,
+                       'num_transformer_blocks': 6, 'mlp_units': 512, 'dropout': 0.4,
+                       'mlp_dropout': 0.3, 'learning_rate': 0.00082,
+                       'validation_split': 0.2, 'batch_size': 128}
 
 
 def objective(trial):
@@ -31,10 +37,10 @@ def objective(trial):
 
     optimizer = trial.suggest_categorical("optimizer_choice",
                                           ['sgd', 'adam', 'rmsprop', 'adagrad', 'adadelta', 'adamax', 'nadam', 'ftrl'])
-    num_head = trial.suggest_int("num_heads", 1, 5)
+    num_head = trial.suggest_int("num_heads", 1, 6)
     head_size = trial.suggest_categorical("head_size", [128, 256, 512])
-    ff_dim = trial.suggest_int("ff_dim", 1, 5)
-    num_transformer_blocks = trial.suggest_int("num_transformer_blocks", 1, 5)
+    ff_dim = trial.suggest_int("ff_dim", 1, 6)
+    num_transformer_blocks = trial.suggest_int("num_transformer_blocks", 1, 6)
     mlp_units = trial.suggest_categorical("mlp_units", [128, 256, 512])
     dropout = trial.suggest_float("dropout", 0.1, 0.6, step=0.1)
     mlp_dropout = trial.suggest_float("mlp_dropout", 0.1, 0.6, step=0.1)
@@ -61,7 +67,7 @@ def objective(trial):
 
 def optuna_optimize():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
-    study.optimize(objective, n_trials=150)
+    study.optimize(objective, n_trials=200)
     best_params = study.best_params
     print(f"Best params: {best_params}")
 
@@ -70,7 +76,7 @@ def optimizer():
     optuna_optimize()
 
 
-def main():
+def main_Code():
     X_train, X_test, y_train, y_test = util.generate_random_sets(util.load_file('data/BATS_SPY.csv'), len_test=300,
                                                                  test_pct=0.3)
     print(f"X_train shape: {X_train.shape}")
@@ -90,4 +96,5 @@ def main():
 
 # Call the main function
 if __name__ == "__main__":
-    main()
+    # main()
+    optuna_optimize()
