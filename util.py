@@ -37,6 +37,7 @@ import keras
 
 
 def gen_sliding_window(data, window_size, z_normalize):
+    print(data.shape)
     sliding_window = np.lib.stride_tricks.sliding_window_view(data, window_shape=(window_size,))
     # print(sliding_window)
     if z_normalize:
@@ -51,7 +52,8 @@ def gen_sliding_window(data, window_size, z_normalize):
 
 
 def load_file(file_name: str):
-    data = pd.read_csv(file_name, index_col=[0], parse_dates=True, infer_datetime_format=True,
+    file_path = param.data_folder + "/" + file_name
+    data = pd.read_csv(file_path, index_col=[0], parse_dates=True, infer_datetime_format=True,
                        usecols=param.usable_data_col).rename(
         columns={'RSI.1': 'RSI_OBV', 'True Strength Index': 'TSI', 'Volume MA': 'VOLUME_MA'}).dropna().rename_axis(
         'date').rename(columns=str.upper)
@@ -59,19 +61,19 @@ def load_file(file_name: str):
     data.dropna(inplace=True)
     return data
 
-def gen_multiple_sliding_window(file_list, window_size, z_normalize, train_cut_off_date):
+def gen_multiple_sliding_window(file_list, window_size, z_normalize, train_cut_off_date, col_name):
     X_train, y_train, X_test, y_test, symbol_file = [], [], [], [], []
     for symbol_file in file_list:
         print(f"Processing {symbol_file}")
         data = load_file(symbol_file)
         data_train = data[data.index < train_cut_off_date]
         data_test = data[data.index >= train_cut_off_date]
-        X_train_temp, y_train_temp = gen_sliding_window(data_train, window_size, z_normalize)
-        X_test_temp, y_test_temp = gen_sliding_window(data_test, window_size, z_normalize)
-        X_train.append(X_train_temp)
-        y_train.append(y_train_temp)
-        X_test.append(X_test_temp)
-        y_test.append(y_test_temp)
+        X_train_temp, y_train_temp = gen_sliding_window(data_train[col_name], window_size, z_normalize)
+        X_test_temp, y_test_temp = gen_sliding_window(data_test[col_name], window_size, z_normalize)
+        X_train.extend(X_train_temp)
+        y_train.extend(y_train_temp)
+        X_test.extend(X_test_temp)
+        y_test.extend(y_test_temp)
     return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test)
 def load_model(model_name: str):
     model = keras.models.load_model(model_name)
@@ -99,9 +101,3 @@ def analyze_results(y_test, y_pred, save_results=True):
 
 def save_csv(data, file_name):
     data.to_csv(file_name)
-
-
-training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
-
-X_train, y_train, X_test, y_test = gen_multiple_sliding_window(param.files, param.chunk_size, param.z_normalize, training_cut_off_date)
-print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)

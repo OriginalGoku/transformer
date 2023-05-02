@@ -4,27 +4,29 @@ import plots
 import optuna
 import parameters as param
 from sklearn.model_selection import train_test_split
+import pandas as pd
+import numpy as np
 
-TRANSFORMER_SETTING = {"epoc": 10,
-                                     "num_heads": 4,
-                                     "head_size": 256,
-                                     "ff_dim": 4,
-                                     "num_transformer_blocks": 4,
-                                     "mlp_units": 128,
-                                     "dropout": 0.4,
-                                     "mlp_dropout": 0.25,
-                                     "optimizer_choice": 'adam',
-                                     "loss": 'mean_squared_error',
-                                     "metrics": 'mean_absolute_error',
-                                     "learning_rate": 0.001,
-                                     "min_learning_rate": 0.00001,
-                                     "print_summary": True,
-                                     "validation_split": 0.2,
-                                     "batch_size": 32}
+TRANSFORMER_SETTING = {"epoc": 20,
+                       "num_heads": 4,
+                       "head_size": 256,
+                       "ff_dim": 4,
+                       "num_transformer_blocks": 4,
+                       "mlp_units": 128,
+                       "dropout": 0.4,
+                       "mlp_dropout": 0.25,
+                       "optimizer_choice": 'adam',
+                       "loss": 'mean_squared_error',
+                       "metrics": 'mean_absolute_error',
+                       "learning_rate": 0.001,
+                       "min_learning_rate": 0.00001,
+                       "print_summary": True,
+                       "validation_split": 0.2,
+                       "batch_size": 32}
 TRANSFORMER_SETTING_5 = {'epoc': 2, 'optimizer_choice': 'adam', 'num_heads': 1, 'head_size': 128, 'ff_dim': 3,
-                       'num_transformer_blocks': 1, 'mlp_units': 128, 'dropout': 0.2,
-                       'mlp_dropout': 0.30000000000000004, 'learning_rate': 0.0007900000000000001,
-                       'validation_split': 0.1, 'batch_size': 16}
+                         'num_transformer_blocks': 1, 'mlp_units': 128, 'dropout': 0.2,
+                         'mlp_dropout': 0.30000000000000004, 'learning_rate': 0.0007900000000000001,
+                         'validation_split': 0.1, 'batch_size': 16}
 
 
 def objective(trial):
@@ -75,10 +77,21 @@ def optimizer():
 
 
 def main():
-    data = util.load_file('data/BATS_SPY.csv')
-    X, y = util.gen_sliding_window(data['CLOSE'], param.chunk_size, param.z_normalize)
+    # data = util.load_file('data/BATS_SPY.csv')
+    # X, y = util.gen_sliding_window(data['CLOSE'], param.chunk_size, param.z_normalize)
+    training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=True)
+    X_train, y_train, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
+                                                                        param.z_normalize,
+                                                                        training_cut_off_date, 'CLOSE')
+    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+
+    # Shuffle data
+    idx = np.random.permutation(len(X_train))
+    X_train = X_train[idx]
+    y_train = y_train[idx]
+
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=True)
 
     # X_train, X_test, y_train, y_test = util.generate_random_sets(util.load_file('data/BATS_SPY.csv'), len_test=300,
     #                                                              test_pct=0.3, y_col='CLOSE_MA')
