@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
 
-TRANSFORMER_SETTING = {"epoc": 10,
+ORIGINAL_TRANSFORMER_SETTING = {"epoc": 2,
                        "num_heads": 4,
                        "head_size": 256,
                        "ff_dim": 4,
@@ -23,16 +23,16 @@ TRANSFORMER_SETTING = {"epoc": 10,
                        "print_summary": True,
                        "validation_split": 0.2,
                        "batch_size": 32}
-TRANSFORMER_SETTING_5 = {'epoc': 2, 'optimizer_choice': 'adam', 'num_heads': 1, 'head_size': 128, 'ff_dim': 3,
-                         'num_transformer_blocks': 1, 'mlp_units': 128, 'dropout': 0.2,
-                         'mlp_dropout': 0.30000000000000004, 'learning_rate': 0.0007900000000000001,
-                         'validation_split': 0.1, 'batch_size': 16}
+TRANSFORMER_SETTING = {'epoc': 2,'optimizer_choice': 'adam', 'num_heads': 4, 'head_size': 256, 'ff_dim': 3,
+                        'num_transformer_blocks': 3, 'mlp_units': 512, 'dropout': 0.2, 'mlp_dropout': 0.5,
+                        'learning_rate': 0.00092, 'validation_split': 0.5, 'batch_size': 32}
 
-# training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
-#
-# X, Y, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
-#                                                         param.z_normalize,
-#                                                         training_cut_off_date, 'CLOSE')
+
+training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
+
+X, Y, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
+                                                         param.z_normalize,
+                                                         training_cut_off_date, 'CLOSE')
 
 
 def objective(trial):
@@ -76,7 +76,7 @@ def objective(trial):
 
 def optimizer():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
-    study.optimize(objective, n_trials=150)
+    study.optimize(objective, n_trials=50)
     best_params = study.best_params
     print(f"Best params: {best_params}")
 
@@ -117,6 +117,6 @@ def main():
 
 # Call the main function
 if __name__ == "__main__":
-    main()
-    # optimizer()
+    #main()
+    optimizer()
 
