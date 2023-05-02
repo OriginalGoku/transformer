@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
 
-TRANSFORMER_SETTING = {"epoc": 20,
+TRANSFORMER_SETTING = {"epoc": 10,
                        "num_heads": 4,
                        "head_size": 256,
                        "ff_dim": 4,
@@ -28,10 +28,19 @@ TRANSFORMER_SETTING_5 = {'epoc': 2, 'optimizer_choice': 'adam', 'num_heads': 1, 
                          'mlp_dropout': 0.30000000000000004, 'learning_rate': 0.0007900000000000001,
                          'validation_split': 0.1, 'batch_size': 16}
 
+training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
+
+X, Y, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
+                                                        param.z_normalize,
+                                                        training_cut_off_date, 'CLOSE')
+
 
 def objective(trial):
-    data = util.load_file('data/BATS_SPY.csv')
-    X, y = util.gen_sliding_window(data, param.chunk_size, param.z_normalize)
+    idx = np.random.permutation(len(X))
+    X_train = X[idx]
+    y_train = Y[idx]
+    # data = util.load_file('data/BATS_SPY.csv')
+    # X, y = util.gen_sliding_window(data, param.chunk_size, param.z_normalize)
     # X_train, X_test, y_train, y_test = util.generate_random_sets(util.load_file('data/BATS_SPY.csv'), len_test=300,
     #                                                              test_pct=0.3)
 
@@ -65,15 +74,11 @@ def objective(trial):
     return transformer.evaluate_model(model, X_test, y_test)
 
 
-def optuna_optimize():
+def optimizer():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
     study.optimize(objective, n_trials=150)
     best_params = study.best_params
     print(f"Best params: {best_params}")
-
-
-def optimizer():
-    optuna_optimize()
 
 
 def main():
@@ -112,4 +117,6 @@ def main():
 
 # Call the main function
 if __name__ == "__main__":
-    main()
+    # main()
+    optimizer()
+
