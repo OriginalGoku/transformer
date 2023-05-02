@@ -40,8 +40,9 @@ def gen_sliding_window(data, window_size, z_normalize):
     print(data.shape)
     sliding_window = np.lib.stride_tricks.sliding_window_view(data, window_shape=(window_size,))
     # print(sliding_window)
+
     if z_normalize:
-        sliding = [np.round((sliding_window[i] - np.mean(sliding_window[i])) / np.std(sliding_window[i]), 4) for i in
+        sliding = [np.round((sliding_window[i] - np.mean(sliding_window[i][:-1])) / np.std(sliding_window[i][:-1]), 4) for i in
                    range(len(sliding_window))]
     else:
         sliding = [np.round(100 * ((sliding_window[i] / sliding_window[i][0]) - 1), 4) for i in

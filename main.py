@@ -28,11 +28,11 @@ TRANSFORMER_SETTING_5 = {'epoc': 2, 'optimizer_choice': 'adam', 'num_heads': 1, 
                          'mlp_dropout': 0.30000000000000004, 'learning_rate': 0.0007900000000000001,
                          'validation_split': 0.1, 'batch_size': 16}
 
-training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
-
-X, Y, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
-                                                        param.z_normalize,
-                                                        training_cut_off_date, 'CLOSE')
+# training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
+#
+# X, Y, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
+#                                                         param.z_normalize,
+#                                                         training_cut_off_date, 'CLOSE')
 
 
 def objective(trial):
@@ -117,6 +117,6 @@ def main():
 
 # Call the main function
 if __name__ == "__main__":
-    # main()
-    optimizer()
+    main()
+    # optimizer()
 
