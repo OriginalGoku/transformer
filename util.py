@@ -6,144 +6,48 @@ import matplotlib.pyplot as plt
 import keras
 
 
-def gen_sliding_window(data: pd.DataFrame(), col_X: str, col_y: str, z_normalize: bool = False):
-    # data
+# Original Sliding Window
+# def gen_sliding_window(data: pd.DataFrame, col_X: str, col_y: str,
+#                        z_normalize_X: bool, z_normalize_y: bool,
+#                        return_mean_y: bool):
+#     X, y = [], []
+#     n = len(data) - chunk_size - forecast_size
+#
+#     for i in range(n):
+#         chunk_X = data[col_X][i:i + chunk_size]
+#         chunk_y = data[col_y][i + chunk_size:i + chunk_size + forecast_size]
+#
+#         if z_normalize_X:
+#             mean_X, std_X = chunk_X.mean(), chunk_X.std()
+#             X.append((chunk_X.values - mean_X) / std_X)
+#         else:
+#             X.append((chunk_X.values / data[col_X][i]) - 1)
+#
+#         if return_mean_y:
+#             mean_y = chunk_y.mean()
+#         else:
+#             mean_y = chunk_y.iloc[-1]
+#
+#         if z_normalize_y:
+#             y.append((mean_y - mean_X) / std_X)
+#         else:
+#             y.append((mean_y / data[col_y][i]) - 1)
+#
+#     return X, y
+
+
+def gen_sliding_window(data, window_size, z_normalize):
+    sliding_window = np.lib.stride_tricks.sliding_window_view(data, window_shape=(window_size,))
+    # print(sliding_window)
     if z_normalize:
-        X = [((data[col_X][i:i + param.chunk_size].values) - np.mean(data[col_X][i:i + param.chunk_size].values)) / (
-            np.std(data[col_X][i:i + param.chunk_size].values)) for i in
-             range(len(data) - param.chunk_size - param.forecast_size)]
+        sliding = [np.round((sliding_window[i] - np.mean(sliding_window[i])) / np.std(sliding_window[i]), 4) for i in
+                   range(len(sliding_window))]
     else:
-        X = np.array([(data[col_X][i:i + param.chunk_size].values / data[col_X][i]) - 1 for i in
-                      range(len(data) - param.chunk_size - param.forecast_size)])
-
-    # Create the target array (y_target) containing the first element after the end of the sliding window
-    y = np.array(
-        [(np.mean(data[col_y][i + param.chunk_size:i + param.chunk_size + param.forecast_size]) / data[col_y][i]) - 1
-         for i in
-         range(len(data) - param.chunk_size - param.forecast_size)])
-
-    return X, y
-
-
-def generate_random_sets_CHAT_GPT_NOT_WORKING(data: pd.DataFrame(), len_test: int = 300, test_pct: float = 0.3,
-                                              z_normalize: bool = False, x_col='CLOSE_MA', y_col='CLOSE',
-                                              return_3d_data=True):
-    print("Generating random sets...")
-    X_random_train = []
-    y_random_train = []
-    X_random_test = []
-    y_random_test = []
-
-    current_pointer = 0
-    chunk_len = int(len_test / (1 - test_pct))
-    train_chunk_len = chunk_len - len_test
-
-    for counter in range((len(data) - param.chunk_size - param.forecast_size) // chunk_len):
-        next_point = random.randint(0, train_chunk_len - 1 - param.chunk_size - param.forecast_size) + (
-                counter * chunk_len)
-        print(f"next_point: {next_point}")
-        print(f"current_pointer: {current_pointer}")
-
-        x_train_temp, y_train_temp = gen_sliding_window(data.iloc[current_pointer: next_point], x_col, y_col,
-                                                        z_normalize)
-        X_random_train.extend(x_train_temp)
-        y_random_train.extend(y_train_temp)
-        x_test_temp, y_test_temp = gen_sliding_window(data.iloc[next_point:next_point + len_test], x_col,
-                                                      y_col, z_normalize)
-        print(f"len(x_test_temp): {len(x_test_temp)}")
-        X_random_test.extend(x_test_temp)
-        y_random_test.extend(y_test_temp)
-        current_pointer = next_point + len_test
-        print("------")
-
-    X_random_train = np.array(X_random_train)
-    y_random_train = np.array(y_random_train)
-    X_random_test = np.array(X_random_test)
-    y_random_test = np.array(y_random_test)
-
-    if return_3d_data:
-        return X_random_train.reshape(*X_random_train.shape, 1), y_random_train, \
-            X_random_test.reshape(*X_random_test.shape, 1), y_random_test
-    else:
-        return X_random_train, y_random_train, X_random_test, y_random_test
-
-
-def generate_random_sets(data: pd.DataFrame(), len_test: int = 300,
-                                                         test_pct: float = 0.3,
-                                                         z_normalize: bool = False, x_col='CLOSE_MA', y_col='CLOSE',
-                                                         return_3d_data=True):
-    print("Generating random sets...")
-    X_random_train = []
-    y_random_train = []
-    X_random_test = []
-    y_random_test = []
-
-    current_pointer = 0
-    chunk_len = int(len_test / test_pct)
-    for counter in range(len(data) // chunk_len):
-        next_point = random.randint(0, chunk_len - len_test) + (counter * chunk_len)
-        # print(f"next_point: {next_point}")
-        # print(f"current_pointer: {current_pointer}")
-        # print(f"len_test: {len_test}")
-        # todo: keep the date ranges for train and test for future analysis
-        x_train_temp, y_train_temp = gen_sliding_window(data.iloc[current_pointer: next_point], x_col, y_col,
-                                                        z_normalize)
-        X_random_train.extend(x_train_temp)
-        y_random_train.extend(y_train_temp)
-        x_test_temp, y_test_temp = gen_sliding_window(data.iloc[next_point:next_point + len_test], x_col,
-                                                      y_col, z_normalize)
-        # print(f"len(x_test_temp): {len(x_test_temp)}")
-        X_random_test.extend(x_test_temp)
-        y_random_test.extend(y_test_temp)
-        current_pointer = next_point + len_test
-
-    X_random_train = np.array(X_random_train)
-    y_random_train = np.array(y_random_train)
-    X_random_test = np.array(X_random_test)
-    y_random_test = np.array(y_random_test)
-    print(f"Generated {len(X_random_train)} Training and {len(X_random_test)} Test Data points")
-    if return_3d_data:
-        return X_random_train.reshape(*X_random_train.shape, 1), X_random_test.reshape(*X_random_test.shape, 1), \
-            y_random_train, y_random_test
-    else:
-        return X_random_train, X_random_test, y_random_train, y_random_test
-
-
-def generate_random_sets1(data: pd.DataFrame(), len_test: int = 300, test_pct: float = 0.3, z_normalize: bool = False,
-                         x_col='CLOSE_MA', y_col='CLOSE'):
-    X_random_train = []
-    y_random_train = []
-    X_random_test = []
-    y_random_test = []
-
-    current_pointer = 0
-    len_test = 300
-    for _ in range(len(data) // 1000):
-        next_point = random.randint(0, 699) + _ * 1000
-        print(next_point)
-        x_train_temp, y_train_temp = gen_sliding_window(data.iloc[current_pointer: next_point], 'CLOSE_MA', 'CLOSE',
-                                                        z_normalize)
-        X_random_train.extend(x_train_temp)
-        y_random_train.extend(y_train_temp)
-        x_test_temp, y_test_temp = gen_sliding_window(data.iloc[next_point:next_point + len_test], 'CLOSE_MA', 'CLOSE',
-                                                      z_normalize)
-        X_random_test.extend(x_test_temp)
-        y_random_test.extend(y_test_temp)
-        # print(f"len(x_test_temp): {len(x_test_temp)}")
-        # print(f"len(X_random_test): {len(X_random_test)}")
-        current_pointer = next_point + len_test
-
-    X_random_train = np.array(X_random_train)
-    y_random_train = np.array(y_random_train)
-    X_random_test = np.array(X_random_test)
-    # print("--------")
-    print(f"len(X_random_test): {len(X_random_test)}")
-    y_random_test = np.array(y_random_test)
-    # if return_3d_data:
-    return X_random_train.reshape(*X_random_train.shape, 1), X_random_test.reshape(*X_random_test.shape, 1), \
-        y_random_train, y_random_test
-    # else:
-    #     return X_random_train, y_random_train, X_random_test, y_random_test
+        sliding = [np.round(100 * ((sliding_window[i] / sliding_window[i][0]) - 1), 4) for i in
+                   range(len(sliding_window))]
+    sliding_y = np.array([sliding[i][-1] for i in range(len(sliding))])
+    sliding = np.array([sliding[i][:-1] for i in range(len(sliding))])
+    return sliding.reshape(*sliding.shape,1), sliding_y
 
 
 def load_file(file_name: str):
@@ -155,7 +59,20 @@ def load_file(file_name: str):
     data.dropna(inplace=True)
     return data
 
-
+def gen_multiple_sliding_window(file_list, window_size, z_normalize, train_cut_off_date):
+    X_train, y_train, X_test, y_test, symbol_file = [], [], [], [], []
+    for symbol_file in file_list:
+        print(f"Processing {symbol_file}")
+        data = load_file(symbol_file)
+        data_train = data[data.index < train_cut_off_date]
+        data_test = data[data.index >= train_cut_off_date]
+        X_train_temp, y_train_temp = gen_sliding_window(data_train, window_size, z_normalize)
+        X_test_temp, y_test_temp = gen_sliding_window(data_test, window_size, z_normalize)
+        X_train.append(X_train_temp)
+        y_train.append(y_train_temp)
+        X_test.append(X_test_temp)
+        y_test.append(y_test_temp)
+    return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test)
 def load_model(model_name: str):
     model = keras.models.load_model(model_name)
     return model
@@ -177,8 +94,14 @@ def analyze_results(y_test, y_pred, save_results=True):
                                             2))
     if save_results:
         save_csv(df_analyze_results, param.result_folder + "/"
-                 f'Analysis for chunk {param.chunk_size} - MA {param.ma_len} - Forecast {param.forecast_size}.csv')
+                                                           f'Analysis for chunk {param.chunk_size} - MA {param.ma_len} - Forecast {param.forecast_size}.csv')
 
 
 def save_csv(data, file_name):
     data.to_csv(file_name)
+
+
+training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
+
+X_train, y_train, X_test, y_test = gen_multiple_sliding_window(param.files, param.chunk_size, param.z_normalize, training_cut_off_date)
+print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)

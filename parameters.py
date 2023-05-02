@@ -14,5 +14,6 @@ files = ['BATS_SPY.csv', 'BATS_QQQ.csv']
 
 result_folder = "results"
 models_folder = "models"
+z_normalize = True
 
 plot_file_details = f"chunk {chunk_size} - MA {ma_len} - Forecast {forecast_size}.png"

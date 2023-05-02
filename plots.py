@@ -69,7 +69,7 @@ def plot_scatter_true_vs_predicted(y_test, y_pred, start_: int, end_: int, save_
 
 def plot_histogram_y_test_minus_y_pred(y_test, y_pred, save_results=True, bins=30):
     # Calculate the differences between true and predicted values
-    differences = (y_test - y_pred).flatten()
+    differences = (y_test - y_pred.reshape(-1,)).flatten()
 
     # Plot the histogram of differences
     plt.hist(differences, bins=bins, color='purple')
