@@ -75,10 +75,11 @@ def objective(trial):
     history, model = transformer.construct_transformer(X_train=X_train, y_train=y_train, **TRANSFORMER_SETTING)
     return transformer.evaluate_model(model, X_test, Y_TEST)
 
+#[I 2023-05-03 04:11:42,190] Trial 47 finished with value: 0.005554900970309973 and parameters: {'optimizer_choice': 'nadam', 'num_heads': 5, 'head_size': 512, 'ff_dim': 5, 'num_transformer_blocks': 2, 'mlp_units': 256, 'dropout': 0.5, 'mlp_dropout': 0.1, 'learning_rate': 0.00834, 'validation_split': 0.4, 'batch_size': 64}. Best is trial 47 with value: 0.005554900970309973.
 
 def optimizer():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
-    study.optimize(objective, n_trials=100)
+    study.optimize(objective, n_trials=150)
     best_params = study.best_params
     print(f"Best params: {best_params}")
 
