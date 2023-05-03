@@ -87,7 +87,7 @@ def objective(trial):
 
 def optimizer():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=50)
     best_params = study.best_params
     print(f"Best params: {best_params}")
 
