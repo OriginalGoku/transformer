@@ -97,26 +97,46 @@ def plot_scatter_true_vs_predicted_diagonal(y_test, y_pred, save_results=True):
     plt.show()
 
 
+# def plot_scatter_true_vs_predicted_diagonal_only_different_sign(y_test, y_pred, save_results=True):
+#     # Plot the true values vs the predicted values
+#     result_indices = [index for index, (test_val, pred_val) in enumerate(zip(y_test, y_pred)) if
+#                       np.sign(test_val) != np.sign(pred_val)]
+#     plt.scatter(y_test[result_indices], y_pred[result_indices], alpha=0.5)
+#     plt.xlabel("True Values")
+#     plt.ylabel("Predicted Values")
+#     plt.title(
+#         f"True Values vs Predicted (Wrong Direction only)\nChunk Len:{param.chunk_size} - SMA{param.ma_len} - Future "
+#         f"Len:{param.forecast_size}")
+#     # Diagonal line
+#     plt.plot([min(y_test[result_indices]), max(y_test[result_indices])], [min(y_test[result_indices]),
+#                                                                           max(y_test[result_indices])], color='red')
+#     if save_results:
+#         file_name = 'True vs Predicted (Wrong Direction)' + param.plot_file_details
+#         print("Saving file: ", file_name)
+#         # print("Saving full path: " + param.result_folder + "/" + file_name)
+#         plt.savefig(param.result_folder + "/" + file_name)
+#     plt.show()
+
 def plot_scatter_true_vs_predicted_diagonal_only_different_sign(y_test, y_pred, save_results=True):
     # Plot the true values vs the predicted values
     result_indices = [index for index, (test_val, pred_val) in enumerate(zip(y_test, y_pred)) if
                       np.sign(test_val) != np.sign(pred_val)]
-    plt.scatter(y_test[result_indices], y_pred[result_indices], alpha=0.5)
-    plt.xlabel("True Values")
-    plt.ylabel("Predicted Values")
-    plt.title(
-        f"True Values vs Predicted (Wrong Direction only)\nChunk Len:{param.chunk_size} - SMA{param.ma_len} - Future "
-        f"Len:{param.forecast_size}")
-    # Diagonal line
-    plt.plot([min(y_test[result_indices]), max(y_test[result_indices])], [min(y_test[result_indices]),
-                                                                          max(y_test[result_indices])], color='red')
-    if save_results:
-        file_name = 'True vs Predicted (Wrong Direction)' + param.plot_file_details
-        print("Saving file: ", file_name)
-        # print("Saving full path: " + param.result_folder + "/" + file_name)
-        plt.savefig(param.result_folder + "/" + file_name)
-    plt.show()
 
-# y_test = numpy.array([1,2,3,4,5,6,7,8,9,10])
-# y_pred = numpy.array([-4,23,13,-49,50,-16,37,88,-91,170])
-# compare each element of y_test with y_pred and generated a new array where the sign of both elements is not the same
+    if result_indices:  # Check if result_indices is not empty
+        plt.scatter(y_test[result_indices], y_pred[result_indices], alpha=0.5)
+        plt.xlabel("True Values")
+        plt.ylabel("Predicted Values")
+        plt.title(
+            f"True Values vs Predicted (Wrong Direction only)\nChunk Len:{param.chunk_size} - SMA{param.ma_len} - Future "
+            f"Len:{param.forecast_size}")
+        # Diagonal line
+        plt.plot([min(y_test[result_indices]), max(y_test[result_indices])], [min(y_test[result_indices]),
+                                                                              max(y_test[result_indices])], color='red')
+        if save_results:
+            file_name = 'True vs Predicted (Wrong Direction)' + param.plot_file_details
+            print("Saving file: ", file_name)
+            # print("Saving full path: " + param.result_folder + "/" + file_name)
+            plt.savefig(param.result_folder + "/" + file_name)
+        plt.show()
+    else:
+        print("No data points with different signs between true and predicted values.")

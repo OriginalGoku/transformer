@@ -7,37 +7,40 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
 
-ORIGINAL_TRANSFORMER_SETTING = {"epoc": 2,
-                                "num_heads": 4,
-                                "head_size": 256,
-                                "ff_dim": 4,
-                                "num_transformer_blocks": 4,
-                                "mlp_units": 128,
-                                "dropout": 0.4,
-                                "mlp_dropout": 0.25,
-                                "optimizer_choice": 'adam',
-                                "loss": 'mean_squared_error',
-                                "metrics": 'mean_absolute_error',
-                                "learning_rate": 0.001,
-                                "min_learning_rate": 0.00001,
-                                "print_summary": True,
-                                "validation_split": 0.2,
-                                "batch_size": 32}
-TRANSFORMER_SETTING = {'epoc': 3, 'optimizer_choice': 'adam', 'num_heads': 4, 'head_size': 256, 'ff_dim': 3,
+# ORIGINAL_TRANSFORMER_SETTING = {"epoc": 1,
+#                                 "num_heads": 1,#4,
+#                                 "head_size": 256,
+#                                 "ff_dim": 4,
+#                                 "num_transformer_blocks": 4,
+#                                 "mlp_units": 128,
+#                                 "dropout": 0.4,
+#                                 "mlp_dropout": 0.25,
+#                                 "optimizer_choice": 'adam',
+#                                 "loss": 'mean_squared_error',
+#                                 "metrics": 'mean_absolute_error',
+#                                 "learning_rate": 0.001,
+#                                 "min_learning_rate": 0.00001,
+#                                 "print_summary": True,
+#                                 "validation_split": 0.2,
+#                                 "batch_size": 32}
+TRANSFORMER_SETTING = {'epoc': 4, 'optimizer_choice': 'adam', 'num_heads': 4, 'head_size': 256, 'ff_dim': 3,
                        'num_transformer_blocks': 3, 'mlp_units': 512, 'dropout': 0.2, 'mlp_dropout': 0.5,
                        'learning_rate': 0.00092, 'validation_split': 0.5, 'batch_size': 32}
 
-# training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
+training_cut_off_date = pd.to_datetime('2019-01-03 09:30:00-05:00')
 
-# X, Y, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
-#                                                         param.z_normalize,
-#                                                         training_cut_off_date, 'CLOSE')
-
+X, Y, X_TEST, Y_TEST, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = util.gen_multiple_sliding_window(
+        param.files, param.chunk_size,
+        param.z_normalize,
+        training_cut_off_date, 'CLOSE')
 
 def objective(trial):
     idx = np.random.permutation(len(X))
     X_train = X[idx]
     y_train = Y[idx]
+
+    X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+    X_test = X_TEST.reshape(X_TEST.shape[0], X_TEST.shape[1], 1)
     # data = util.load_file('data/BATS_SPY.csv')
     # X, y = util.gen_sliding_window(data, param.chunk_size, param.z_normalize)
     # X_train, X_test, y_train, y_test = util.generate_random_sets(util.load_file('data/BATS_SPY.csv'), len_test=300,
@@ -70,12 +73,12 @@ def objective(trial):
     TRANSFORMER_SETTING["batch_size"] = batch_size
 
     history, model = transformer.construct_transformer(X_train=X_train, y_train=y_train, **TRANSFORMER_SETTING)
-    return transformer.evaluate_model(model, X_test, y_test)
+    return transformer.evaluate_model(model, X_test, Y_TEST)
 
 
 def optimizer():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
-    study.optimize(objective, n_trials=50)
+    study.optimize(objective, n_trials=100)
     best_params = study.best_params
     print(f"Best params: {best_params}")
 
@@ -83,9 +86,9 @@ def optimizer():
 def main():
     # data = util.load_file('data/BATS_SPY.csv')
     # X, y = util.gen_sliding_window(data['CLOSE'], param.chunk_size, param.z_normalize)
-    training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
+    training_cut_off_date = pd.to_datetime('2015-01-03 09:30:00-05:00')
 
-    X_train, y_train, X_test, y_test, train_mean, train_std, test_mean, test_std = util.gen_multiple_sliding_window(
+    X_train, y_train, X_test, y_test, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = util.gen_multiple_sliding_window(
         param.files, param.chunk_size,
         param.z_normalize,
         training_cut_off_date, 'CLOSE')
@@ -98,8 +101,7 @@ def main():
 
     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=True)
 
-    # X_train, X_test, y_train, y_test = util.generate_random_sets(util.load_file('data/BATS_SPY.csv'), len_test=300,
-    #                                                              test_pct=0.3, y_col='CLOSE_MA')
+
     X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
     X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
@@ -110,19 +112,28 @@ def main():
     history, model = transformer.construct_transformer(X_train=X_train, y_train=y_train, **TRANSFORMER_SETTING)
     transformer.evaluate_model(model, X_test, y_test)
 
-    y_pred_z_normal = model.predict(X_test)
+    y_pred_normal = model.predict(X_test)
 
-    X_test_original, y_pred = util.convert_normalized_data(X_test, y_pred_z_normal, test_mean, test_std)
-    X_test_orinal, y_test = util.convert_normalized_data(X_test, y_test, test_mean, test_std)
+    if param.z_normalize:
+        y_pred = util.convert_to_original(y_pred_normal, test_mean, test_std)
+        y_test = util.convert_to_original(y_test, test_mean, test_std)
+        X_test = util.convert_to_original(X_test, test_mean, test_std)
+    else:
+        y_pred = util.convert_to_original(y_pred_normal, train_mean, train_std, x_0_test)
+        y_test = util.convert_to_original(y_test, train_mean, train_std, x_0_test)
+        X_test = util.convert_to_original(X_test, train_mean, train_std, x_0_test)
+
+
 
     plots.plot_scatter_true_vs_predicted(y_test, y_pred, 0, 300)
     plots.plot_histogram_y_test_minus_y_pred(y_test, y_pred)
     plots.plot_scatter_true_vs_predicted_diagonal(y_test, y_pred)
     plots.plot_scatter_true_vs_predicted_diagonal_only_different_sign(y_test, y_pred)
-    util.analyze_results(y_test, y_pred)
+    util.analyze_results(y_test, y_pred, X_test)
 
 
 # Call the main function
 if __name__ == "__main__":
-    main()
-    # optimizer()
+    # main()
+    optimizer()
+#
