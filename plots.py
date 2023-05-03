@@ -54,6 +54,7 @@ def plot_history_metrics(history: keras.callbacks.History, save_results=True):
 def plot_scatter_true_vs_predicted(y_test, y_pred, start_: int, end_: int, save_results=True):
 
     fig = plt.figure(figsize=(30, 10))
+    print(f"Plotting from {start_} to {end_} for y_test = {len(y_test)}, predictions = {len(y_pred)} ")
     # Plot the limited range of true values vs the predicted values
     plt.scatter(np.arange(start_, end_), y_pred[start_:end_], alpha=0.5, marker='x', color='red', label='Predicted')
     plt.scatter(np.arange(start_, end_), y_test.reshape(-1, 1)[start_:end_], alpha=0.5, marker='o', color='blue',
@@ -67,12 +68,12 @@ def plot_scatter_true_vs_predicted(y_test, y_pred, start_: int, end_: int, save_
     plt.show()
 
 
-def plot_histogram_y_test_minus_y_pred(y_test, y_pred, save_results=True, bins=30):
+def plot_histogram_y_test_minus_y_pred(y_test, y_pred, x_test, save_results=True, bins=30):
     # Calculate the differences between true and predicted values
     differences = (y_test - y_pred.reshape(-1,)).flatten()
-
+    differences_pct = np.round([differences/x_test[i][-1] for i in range(len(x_test))],4)
     # Plot the histogram of differences
-    plt.hist(differences, bins=bins, color='purple')
+    plt.hist(differences_pct.flatten(), bins=bins, color='purple')
     plt.xlabel("Difference")
     plt.ylabel("Frequency")
     plt.title("Histogram of Differences between True and Predicted Values")

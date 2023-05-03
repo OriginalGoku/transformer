@@ -23,16 +23,25 @@ import numpy as np
 #                                 "print_summary": True,
 #                                 "validation_split": 0.2,
 #                                 "batch_size": 32}
-TRANSFORMER_SETTING = {'epoc': 4, 'optimizer_choice': 'adam', 'num_heads': 4, 'head_size': 256, 'ff_dim': 3,
-                       'num_transformer_blocks': 3, 'mlp_units': 512, 'dropout': 0.2, 'mlp_dropout': 0.5,
-                       'learning_rate': 0.00092, 'validation_split': 0.5, 'batch_size': 32}
+# TRANSFORMER_SETTING = {'epoc': 4, 'optimizer_choice': 'adam', 'num_heads': 4, 'head_size': 256, 'ff_dim': 3,
+#                        'num_transformer_blocks': 3, 'mlp_units': 512, 'dropout': 0.2, 'mlp_dropout': 0.5,
+#                        'learning_rate': 0.00092, 'validation_split': 0.5, 'batch_size': 32}
 
-training_cut_off_date = pd.to_datetime('2019-01-03 09:30:00-05:00')
+# Optimized using Optuna 3 May 2023
+TRANSFORMER_SETTING = {'epoc': 3, 'optimizer_choice': 'nadam', 'num_heads': 5, 'head_size': 512, 'ff_dim': 5,
+                       'num_transformer_blocks': 2, 'mlp_units': 256, 'dropout': 0.5, 'mlp_dropout': 0.1,
+                       'learning_rate': 0.00834, 'validation_split': 0.4,
+                       'batch_size': 64}  # Best is trial 47 with value: 0.005554900970309973}
 
-X, Y, X_TEST, Y_TEST, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = util.gen_multiple_sliding_window(
-        param.files, param.chunk_size,
-        param.z_normalize,
-        training_cut_off_date, 'CLOSE')
+
+# [I 2023-05-03 04:11:42,190] Trial 47 finished with value: 0.005554900970309973 and parameters: {'optimizer_choice': 'nadam', 'num_heads': 5, 'head_size': 512, 'ff_dim': 5, 'num_transformer_blocks': 2, 'mlp_units': 256, 'dropout': 0.5, 'mlp_dropout': 0.1, 'learning_rate': 0.00834, 'validation_split': 0.4, 'batch_size': 64}. Best is trial 47 with value: 0.005554900970309973.
+
+# training_cut_off_date = pd.to_datetime('2019-01-03 09:30:00-05:00')
+#
+# X, Y, X_TEST, Y_TEST, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = util.gen_multiple_sliding_window(
+#         param.files, param.chunk_size,
+#         param.z_normalize,
+#         training_cut_off_date, 'CLOSE')
 
 def objective(trial):
     idx = np.random.permutation(len(X))
@@ -75,7 +84,6 @@ def objective(trial):
     history, model = transformer.construct_transformer(X_train=X_train, y_train=y_train, **TRANSFORMER_SETTING)
     return transformer.evaluate_model(model, X_test, Y_TEST)
 
-#[I 2023-05-03 04:11:42,190] Trial 47 finished with value: 0.005554900970309973 and parameters: {'optimizer_choice': 'nadam', 'num_heads': 5, 'head_size': 512, 'ff_dim': 5, 'num_transformer_blocks': 2, 'mlp_units': 256, 'dropout': 0.5, 'mlp_dropout': 0.1, 'learning_rate': 0.00834, 'validation_split': 0.4, 'batch_size': 64}. Best is trial 47 with value: 0.005554900970309973.
 
 def optimizer():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
@@ -85,15 +93,13 @@ def optimizer():
 
 
 def main():
-    # data = util.load_file('data/BATS_SPY.csv')
-    # X, y = util.gen_sliding_window(data['CLOSE'], param.chunk_size, param.z_normalize)
-    training_cut_off_date = pd.to_datetime('2015-01-03 09:30:00-05:00')
+    training_cut_off_date = pd.to_datetime('2018-01-03 09:30:00-05:00')
 
-    X_train, y_train, X_test, y_test, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = util.gen_multiple_sliding_window(
-        param.files, param.chunk_size,
-        param.z_normalize,
-        training_cut_off_date, 'CLOSE')
-    # print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+    X_train, y_train, X_test, y_test, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = \
+        util.gen_multiple_sliding_window(
+            param.files, param.chunk_size,
+            param.z_normalize,
+            training_cut_off_date, 'CLOSE')
 
     # Shuffle data
     idx = np.random.permutation(len(X_train))
@@ -102,12 +108,12 @@ def main():
 
     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=True)
 
-
     X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
     X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
     print(f"X_train shape: {X_train.shape}")
     print(f"X_test shape: {X_test.shape}")
+
     plots.plot_hist_y_distribution(y_train, y_test)
 
     history, model = transformer.construct_transformer(X_train=X_train, y_train=y_train, **TRANSFORMER_SETTING)
@@ -116,18 +122,17 @@ def main():
     y_pred_normal = model.predict(X_test)
 
     if param.z_normalize:
-        y_pred = util.convert_to_original(y_pred_normal, test_mean, test_std)
-        y_test = util.convert_to_original(y_test, test_mean, test_std)
-        X_test = util.convert_to_original(X_test, test_mean, test_std)
-    else:
-        y_pred = util.convert_to_original(y_pred_normal, train_mean, train_std, x_0_test)
-        y_test = util.convert_to_original(y_test, train_mean, train_std, x_0_test)
-        X_test = util.convert_to_original(X_test, train_mean, train_std, x_0_test)
-
-
+        x_0_test = None
+        # y_pred = util.convert_to_original(y_pred_normal, test_mean, test_std)
+        # y_test = util.convert_to_original(y_test, test_mean, test_std)
+        # X_test = util.convert_to_original(X_test, test_mean, test_std)
+    # else:
+    y_pred = util.convert_to_original(y_pred_normal, train_mean, train_std, x_0_test)
+    y_test = util.convert_to_original(y_test, train_mean, train_std, x_0_test)
+    X_test = util.convert_to_original(X_test, train_mean, train_std, x_0_test)
 
     plots.plot_scatter_true_vs_predicted(y_test, y_pred, 0, 300)
-    plots.plot_histogram_y_test_minus_y_pred(y_test, y_pred)
+    plots.plot_histogram_y_test_minus_y_pred(y_test, y_pred, X_test)
     plots.plot_scatter_true_vs_predicted_diagonal(y_test, y_pred)
     plots.plot_scatter_true_vs_predicted_diagonal_only_different_sign(y_test, y_pred)
     util.analyze_results(y_test, y_pred, X_test)
@@ -135,6 +140,6 @@ def main():
 
 # Call the main function
 if __name__ == "__main__":
-    # main()
-    optimizer()
+    main()
+    # optimizer()
 #
