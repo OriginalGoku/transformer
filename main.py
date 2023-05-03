@@ -36,12 +36,12 @@ TRANSFORMER_SETTING = {'epoc': 3, 'optimizer_choice': 'nadam', 'num_heads': 5, '
 
 # [I 2023-05-03 04:11:42,190] Trial 47 finished with value: 0.005554900970309973 and parameters: {'optimizer_choice': 'nadam', 'num_heads': 5, 'head_size': 512, 'ff_dim': 5, 'num_transformer_blocks': 2, 'mlp_units': 256, 'dropout': 0.5, 'mlp_dropout': 0.1, 'learning_rate': 0.00834, 'validation_split': 0.4, 'batch_size': 64}. Best is trial 47 with value: 0.005554900970309973.
 
-# training_cut_off_date = pd.to_datetime('2019-01-03 09:30:00-05:00')
+training_cut_off_date = pd.to_datetime('2019-01-03 09:30:00-05:00')
 #
-# X, Y, X_TEST, Y_TEST, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = util.gen_multiple_sliding_window(
-#         param.files, param.chunk_size,
-#         param.z_normalize,
-#         training_cut_off_date, 'CLOSE')
+X, Y, X_TEST, Y_TEST, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = util.gen_multiple_sliding_window(
+        param.files, param.chunk_size,
+        param.z_normalize,
+        training_cut_off_date, 'CLOSE')
 
 def objective(trial):
     idx = np.random.permutation(len(X))
@@ -87,13 +87,13 @@ def objective(trial):
 
 def optimizer():
     study = optuna.create_study(study_name="Transformer Optimization", direction="minimize")
-    study.optimize(objective, n_trials=150)
+    study.optimize(objective, n_trials=1)
     best_params = study.best_params
     print(f"Best params: {best_params}")
 
 
 def main():
-    training_cut_off_date = pd.to_datetime('2018-01-03 09:30:00-05:00')
+    training_cut_off_date = pd.to_datetime('2019-01-03 09:30:00-05:00')
 
     X_train, y_train, X_test, y_test, train_mean, train_std, test_mean, test_std, x_0_train, x_0_test = \
         util.gen_multiple_sliding_window(
@@ -127,11 +127,11 @@ def main():
         # y_test = util.convert_to_original(y_test, test_mean, test_std)
         # X_test = util.convert_to_original(X_test, test_mean, test_std)
     # else:
-    y_pred = util.convert_to_original(y_pred_normal, train_mean, train_std, x_0_test)
-    y_test = util.convert_to_original(y_test, train_mean, train_std, x_0_test)
-    X_test = util.convert_to_original(X_test, train_mean, train_std, x_0_test)
+    y_pred = util.convert_to_original(y_pred_normal, test_mean, test_mean, x_0_test)
+    y_test = util.convert_to_original(y_test, test_mean, test_std, x_0_test)
+    X_test = util.convert_to_original(X_test, test_mean, test_std, x_0_test)
 
-    plots.plot_scatter_true_vs_predicted(y_test, y_pred, 0, 300)
+    plots.plot_scatter_true_vs_predicted(y_test, y_pred, 0, len(y_test)//3)
     plots.plot_histogram_y_test_minus_y_pred(y_test, y_pred, X_test)
     plots.plot_scatter_true_vs_predicted_diagonal(y_test, y_pred)
     plots.plot_scatter_true_vs_predicted_diagonal_only_different_sign(y_test, y_pred)
@@ -140,6 +140,6 @@ def main():
 
 # Call the main function
 if __name__ == "__main__":
-    main()
-    # optimizer()
+    # main()
+    optimizer()
 #

@@ -15,6 +15,7 @@ import keras
 def convert_to_original(normalized_window, mean_data, std_data, x_0=None):
     if x_0 is None:  # z_normalize = True
         # original_window = np.round(normalized_window * std_data + mean_data, 4)
+        print("normalized_window: ", len(normalized_window), "std_data: ", len(std_data), "mean_data: ", len(mean_data))
         original_window = [normalized_window[i] * std_data[i] + mean_data[i] for i in range(len(normalized_window))]
 
     else:  # z_normalize = False
@@ -84,11 +85,11 @@ def gen_multiple_sliding_window(file_list, window_size, z_normalize, train_cut_o
         data_test = data[data.index >= train_cut_off_date]
 
         print("Generting Train Data...")
-        X_train_temp, y_train_temp, train_mean, train_std, x_0_train_temp = gen_sliding_window_including_open(
+        X_train_temp, y_train_temp, train_mean_temp, train_std_temp, x_0_train_temp = gen_sliding_window_including_open(
             data_train[col_name], data_train['OPEN'],
             window_size, z_normalize)
         print("Generting Test Data...")
-        X_test_temp, y_test_temp, test_mean, test_std, x_0_test_temp = gen_sliding_window_including_open(
+        X_test_temp, y_test_temp, test_mean_temp, test_std_temp, x_0_test_temp = gen_sliding_window_including_open(
             data_test[col_name], data_test['OPEN'],
             window_size, z_normalize)
 
@@ -97,10 +98,10 @@ def gen_multiple_sliding_window(file_list, window_size, z_normalize, train_cut_o
         X_test.extend(X_test_temp)
         y_test.extend(y_test_temp)
 
-        train_mean.extend(train_mean)
-        train_std.extend(train_std)
-        test_mean.extend(test_mean)
-        test_std.extend(test_std)
+        train_mean.extend(train_mean_temp)
+        train_std.extend(train_std_temp)
+        test_mean.extend(test_mean_temp)
+        test_std.extend(test_std_temp)
 
         x_0_train.extend(x_0_train_temp)
         x_0_test.extend(x_0_test_temp)
