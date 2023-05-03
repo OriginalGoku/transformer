@@ -37,19 +37,34 @@ import keras
 
 
 def gen_sliding_window(data, window_size, z_normalize):
-    print(data.shape)
+    print(f"Generating Sliding Window (window_size = {window_size}, z_normalize = {z_normalize})")
     sliding_window = np.lib.stride_tricks.sliding_window_view(data, window_shape=(window_size,))
-    # print(sliding_window)
+    n_windows = len(sliding_window)
 
-    if z_normalize:
-        sliding = [np.round((sliding_window[i] - np.mean(sliding_window[i][:-1])) / np.std(sliding_window[i][:-1]), 4) for i in
-                   range(len(sliding_window))]
-    else:
-        sliding = [np.round(100 * ((sliding_window[i] / sliding_window[i][0]) - 1), 4) for i in
-                   range(len(sliding_window))]
-    sliding_y = np.array([sliding[i][-1] for i in range(len(sliding))])
-    sliding = np.array([sliding[i][:-1] for i in range(len(sliding))])
-    return sliding.reshape(*sliding.shape,1), sliding_y
+    sliding, sliding_y, mean_data, std_data = [], [], [], []
+
+    for i in range(n_windows):
+        window = sliding_window[i]
+        if z_normalize:
+            mean = np.mean(window[:-1])
+            std = np.std(window[:-1])
+
+            normalized_window = np.round((window - mean) / std, 4)
+
+            mean_data.append(mean)
+            std_data.append(std)
+        else:
+            normalized_window = np.round(100 * ((window / window[0]) - 1), 4)
+
+        sliding.append(normalized_window[:-1])
+        sliding_y.append(normalized_window[-1])
+
+    return sliding, sliding_y, mean_data, std_data
+
+def convert_normalized_data(X, y, mean_data, std_data):
+    original_X = [X[i] * std_data[i] + mean_data[i] for i in range(len(X))]
+    original_y = [y[i] * std_data[i] + mean_data[i] for i in range(len(y))]
+    return np.array(original_X), np.array(original_y)
 
 
 def load_file(file_name: str):
@@ -63,19 +78,24 @@ def load_file(file_name: str):
     return data
 
 def gen_multiple_sliding_window(file_list, window_size, z_normalize, train_cut_off_date, col_name):
-    X_train, y_train, X_test, y_test, symbol_file = [], [], [], [], []
+    X_train, y_train, X_test, y_test, train_mean, train_std, test_mean, test_std, symbol_file = [], [], [], [], [], [], [], [], []
     for symbol_file in file_list:
         print(f"Processing {symbol_file}")
         data = load_file(symbol_file)
         data_train = data[data.index < train_cut_off_date]
         data_test = data[data.index >= train_cut_off_date]
-        X_train_temp, y_train_temp = gen_sliding_window(data_train[col_name], window_size, z_normalize)
-        X_test_temp, y_test_temp = gen_sliding_window(data_test[col_name], window_size, z_normalize)
+        X_train_temp, y_train_temp, train_mean, train_std = gen_sliding_window(data_train[col_name], window_size, z_normalize)
+        X_test_temp, y_test_temp, test_mean, test_std = gen_sliding_window(data_test[col_name], window_size, z_normalize)
         X_train.extend(X_train_temp)
         y_train.extend(y_train_temp)
         X_test.extend(X_test_temp)
         y_test.extend(y_test_temp)
-    return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test)
+        train_mean.extend(train_mean)
+        train_std.extend(train_std)
+        test_mean.extend(test_mean)
+        test_std.extend(test_std)
+    return np.array(X_train), np.array(y_train), np.array(X_test), np.array(y_test), np.array(train_mean), np.array(train_std), np.array(test_mean), np.array(test_std)
+
 def load_model(model_name: str):
     model = keras.models.load_model(model_name)
     return model

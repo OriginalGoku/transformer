@@ -8,31 +8,30 @@ import pandas as pd
 import numpy as np
 
 ORIGINAL_TRANSFORMER_SETTING = {"epoc": 2,
-                       "num_heads": 4,
-                       "head_size": 256,
-                       "ff_dim": 4,
-                       "num_transformer_blocks": 4,
-                       "mlp_units": 128,
-                       "dropout": 0.4,
-                       "mlp_dropout": 0.25,
-                       "optimizer_choice": 'adam',
-                       "loss": 'mean_squared_error',
-                       "metrics": 'mean_absolute_error',
-                       "learning_rate": 0.001,
-                       "min_learning_rate": 0.00001,
-                       "print_summary": True,
-                       "validation_split": 0.2,
-                       "batch_size": 32}
-TRANSFORMER_SETTING = {'epoc': 2,'optimizer_choice': 'adam', 'num_heads': 4, 'head_size': 256, 'ff_dim': 3,
-                        'num_transformer_blocks': 3, 'mlp_units': 512, 'dropout': 0.2, 'mlp_dropout': 0.5,
-                        'learning_rate': 0.00092, 'validation_split': 0.5, 'batch_size': 32}
+                                "num_heads": 4,
+                                "head_size": 256,
+                                "ff_dim": 4,
+                                "num_transformer_blocks": 4,
+                                "mlp_units": 128,
+                                "dropout": 0.4,
+                                "mlp_dropout": 0.25,
+                                "optimizer_choice": 'adam',
+                                "loss": 'mean_squared_error',
+                                "metrics": 'mean_absolute_error',
+                                "learning_rate": 0.001,
+                                "min_learning_rate": 0.00001,
+                                "print_summary": True,
+                                "validation_split": 0.2,
+                                "batch_size": 32}
+TRANSFORMER_SETTING = {'epoc': 3, 'optimizer_choice': 'adam', 'num_heads': 4, 'head_size': 256, 'ff_dim': 3,
+                       'num_transformer_blocks': 3, 'mlp_units': 512, 'dropout': 0.2, 'mlp_dropout': 0.5,
+                       'learning_rate': 0.00092, 'validation_split': 0.5, 'batch_size': 32}
 
+# training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
 
-training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
-
-X, Y, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
-                                                         param.z_normalize,
-                                                         training_cut_off_date, 'CLOSE')
+# X, Y, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
+#                                                         param.z_normalize,
+#                                                         training_cut_off_date, 'CLOSE')
 
 
 def objective(trial):
@@ -86,10 +85,11 @@ def main():
     # X, y = util.gen_sliding_window(data['CLOSE'], param.chunk_size, param.z_normalize)
     training_cut_off_date = pd.to_datetime('2020-01-03 09:30:00-05:00')
 
-    X_train, y_train, X_test, y_test = util.gen_multiple_sliding_window(param.files, param.chunk_size,
-                                                                        param.z_normalize,
-                                                                        training_cut_off_date, 'CLOSE')
-    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+    X_train, y_train, X_test, y_test, train_mean, train_std, test_mean, test_std = util.gen_multiple_sliding_window(
+        param.files, param.chunk_size,
+        param.z_normalize,
+        training_cut_off_date, 'CLOSE')
+    # print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
 
     # Shuffle data
     idx = np.random.permutation(len(X_train))
@@ -100,6 +100,9 @@ def main():
 
     # X_train, X_test, y_train, y_test = util.generate_random_sets(util.load_file('data/BATS_SPY.csv'), len_test=300,
     #                                                              test_pct=0.3, y_col='CLOSE_MA')
+    X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+    X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+
     print(f"X_train shape: {X_train.shape}")
     print(f"X_test shape: {X_test.shape}")
     plots.plot_hist_y_distribution(y_train, y_test)
@@ -107,8 +110,12 @@ def main():
     history, model = transformer.construct_transformer(X_train=X_train, y_train=y_train, **TRANSFORMER_SETTING)
     transformer.evaluate_model(model, X_test, y_test)
 
-    y_pred = model.predict(X_test)
-    plots.plot_scatter_true_vs_predicted(y_test, y_pred, 100, 200)
+    y_pred_z_normal = model.predict(X_test)
+
+    X_test_original, y_pred = util.convert_normalized_data(X_test, y_pred_z_normal, test_mean, test_std)
+    X_test_orinal, y_test = util.convert_normalized_data(X_test, y_test, test_mean, test_std)
+
+    plots.plot_scatter_true_vs_predicted(y_test, y_pred, 0, 300)
     plots.plot_histogram_y_test_minus_y_pred(y_test, y_pred)
     plots.plot_scatter_true_vs_predicted_diagonal(y_test, y_pred)
     plots.plot_scatter_true_vs_predicted_diagonal_only_different_sign(y_test, y_pred)
@@ -117,6 +124,5 @@ def main():
 
 # Call the main function
 if __name__ == "__main__":
-    #main()
-    optimizer()
-
+    main()
+    # optimizer()

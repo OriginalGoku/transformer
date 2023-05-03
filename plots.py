@@ -52,8 +52,8 @@ def plot_history_metrics(history: keras.callbacks.History, save_results=True):
 
 
 def plot_scatter_true_vs_predicted(y_test, y_pred, start_: int, end_: int, save_results=True):
-    # start_ and end_ Specify the range you want to display
 
+    fig = plt.figure(figsize=(30, 10))
     # Plot the limited range of true values vs the predicted values
     plt.scatter(np.arange(start_, end_), y_pred[start_:end_], alpha=0.5, marker='x', color='red', label='Predicted')
     plt.scatter(np.arange(start_, end_), y_test.reshape(-1, 1)[start_:end_], alpha=0.5, marker='o', color='blue',
